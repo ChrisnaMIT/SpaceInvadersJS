@@ -6,10 +6,11 @@ const aliensRemoved = []
 let invadersID
 let isGoingRight =  true
 let direction = 1
+ let results = 0
 
 for (let i = 0; i < width * width; i++){ // création de 115 carrés (div) avec une boucle
     const square = document.createElement('div') // création du de la constante "square"
-    square.id = i
+
     grid.appendChild(square) // Utilisation de appendChild pour intégrer le noeud enfant  au noeud parent
     // ainsi dans le grid qui fait 15 par 15 on rajoute tous les carrées 15*15=225
 }
@@ -60,25 +61,89 @@ document.addEventListener('keydown', moveShooter)
 
 
 function moveInvaders(){
-    const leftEdge = aliensInvaders[0] % width === 0
-    const rightEdge = aliensInvaders[aliensInvaders - 1] % width === width -1
+    const leftEdge = aliensInvaders[0] % width === 0 // leftEdge verifie si le invader avec l'index 0 est sur la 1 er colonne
+    const rightEdge = aliensInvaders[aliensInvaders - 1] % width === width -1 // rightEdge verifie si le dernier invader est sur la derniere colonne
     remove()
 
-
-    if(rightEdge && isGoingRight) {
+// si invader touche le bouche il descendent d'une ligne
+    if(rightEdge && isGoingRight) { // si les invader sont sur le bord droite et qu'il se deplace vers la droite
         for (let i = 0; i < aliensInvaders.length; i++){
-            aliensInvaders[i] += width + 1
-            direction = -1
+            aliensInvaders[i] += width + 1 //alors il descende d'une ligne
+            direction = -1 // et il repart de la gauche vers la droite
             isGoingRight = false
         }
     }
 
     for (let i = 0; i < aliensInvaders.length; i++){
-        aliensInvaders[i] += direction
+        aliensInvaders[i] += direction // si invader ne sont pas dans un bord il continue leur chemin
+    }
+    draw()
+
+    if(squares[currentShooterIndex].classList.contains("invader")){ // si l'index d'un invader touche l'index de la ou est le shooter
+        resultDisplay.innerHTML= "GAME OVER" // c'est game over
+        clearInterval(invadersID)
     }
 
+    if(aliensRemoved.length === aliensInvaders.length){ //si les invader detruit est de la meme longueur que les invader
+        resultDisplay.innerHTML= "YOU WIN" // alors you win
+        clearInterval(invadersID)
+    }
 
-
-    draw()
 }
- invadersID = setInterval(moveInvaders, 600)
+ invadersID = setInterval(moveInvaders, 600) // sa appel la function moveInvader ce qui créer le mouvemeent des invader tout les 6vmillisecondes
+
+function shoot(e){
+    let laserId
+    let currentLaserIndex = currentShooterIndex
+
+    function moveLaser(){ // permet de gerer le mouvement du laser vers le haut
+        squares[currentLaserIndex].classList.remove('laser')
+        currentLaserIndex -= width // en faisant une décrémantation de currentLAserIndex par widht
+        squares[currentLaserIndex].classList.add('laser')
+
+        // si le laser touche un invader
+        if(squares[currentLaserIndex].classList.contains("invader")){
+            squares[currentLaserIndex].classList.remove("laser")  //le laser est supprimer du tableau en retirant sa classe
+            squares[currentLaserIndex].classList.remove("invader")//invader est supprimer du tableau en retirant sa classe
+            squares[currentLaserIndex].classList.add("boom") // création d'un effet lorsque que laser touche invader
+
+            setTimeout(() => squares[currentLaserIndex].classList.remove("boom"), 300 )
+            clearInterval(laserId)
+
+            const alienRemoved = aliensInvaders.indexOf(currentLaserIndex) // on identifie le invader grace à son index
+            aliensRemoved.push(alienRemoved) // et on l'ajoute au groupe des invaders detruit
+            results ++
+            resultDisplay.innerHTML = results
+        }
+    }
+
+   if (e.key){
+       setInterval(moveLaser, 100) // sa appel la function moveLAser toutes les 1millisecondes ce qui créer un mouvement
+   }
+}
+
+document.addEventListener('keydown', shoot) // appel la function shoot a chaque fois qu'on touche le clavier
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
